@@ -33,10 +33,31 @@ def migrate_tickets_from_csv(file_path="DATA/it_tickets.csv", conn=None):
 
 
 def get_all_tickets(conn=None):
+    """
+    Retrieve all IT tickets stored in the it_tickets table
+    and return them as a pandas DataFrame.
+    """
     if conn is None:
         conn = connect_database()
+
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM it_tickets")
     rows = cursor.fetchall()
+
     df = pd.DataFrame(rows, columns=[col[0] for col in cursor.description])
     return df
+
+
+# ---------------- NEW FUNCTION ADDED ----------------
+def insert_ticket(conn, ticket_id: int, title: str, status: str, priority: str, assigned_to: str, description: str):
+    """
+    Insert a single ticket into the it_tickets table.
+    Uses parameterized queries to prevent SQL injection.
+    Note: 'description' is stored separately from 'title' for clarity.
+    """
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO it_tickets (ticket_id, title, status, priority, assigned_to, description)
+        VALUES (?, ?, ?, ?, ?, ?)
+    """, (ticket_id, title, status, priority, assigned_to, description))
+    conn.commit()
